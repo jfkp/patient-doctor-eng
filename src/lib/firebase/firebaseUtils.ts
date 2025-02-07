@@ -11,8 +11,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  query,
+  orderBy,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Note } from "../types/note";
 
 // Auth functions
 export const logoutUser = () => signOut(auth);
@@ -51,4 +54,23 @@ export const uploadFile = async (file: File, path: string) => {
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+};
+
+// Notes specific functions
+export const getNotes = async (): Promise<Note[]> => {
+  const querySnapshot = await getDocs(
+    query(collection(db, 'notes'), orderBy('timestamp', 'desc'))
+  );
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Note[];
+};
+
+export const updateNote = async (id: string, text: string) => {
+  await updateDoc(doc(db, 'notes', id), { text });
+};
+
+export const deleteNote = async (id: string) => {
+  await deleteDoc(doc(db, 'notes', id));
 };
